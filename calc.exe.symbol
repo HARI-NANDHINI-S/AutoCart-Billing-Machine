@@ -1,0 +1,58 @@
+< THE SYMBOL TABLE >  calc.exe  --  emu8086 assembler version: 4.08 
+===================================================================================================
+Name                     	Offset    	Size      	Type      	Segment   
+===================================================================================================
+STACK                    	00000     	-5        	SEGMENT   	(ITSELF)  
+DATA                     	00020     	-5        	SEGMENT   	(ITSELF)  
+FNAME_IN                 	00000     	1         	VAR       	data      
+FNAME_OUT                	00016     	1         	VAR       	data      
+HDL_IN                   	0002D     	2         	VAR       	data      
+HDL_OUT                  	0002F     	2         	VAR       	data      
+RBUF                     	00031     	1         	VAR       	data      
+WBUF                     	000B1     	1         	VAR       	data      
+CRLF                     	000C1     	1         	VAR       	data      
+SUB_LO                   	000C3     	2         	VAR       	data      
+SUB_HI                   	000C5     	2         	VAR       	data      
+DPC                      	000C7     	2         	VAR       	data      
+GPC                      	000C9     	2         	VAR       	data      
+CPN_LO                   	000CB     	2         	VAR       	data      
+CPN_HI                   	000CD     	2         	VAR       	data      
+DIS_LO                   	000CF     	2         	VAR       	data      
+DIS_HI                   	000D1     	2         	VAR       	data      
+GST_LO                   	000D3     	2         	VAR       	data      
+GST_HI                   	000D5     	2         	VAR       	data      
+GND_LO                   	000D7     	2         	VAR       	data      
+GND_HI                   	000D9     	2         	VAR       	data      
+AFT_LO                   	000DB     	2         	VAR       	data      
+AFT_HI                   	000DD     	2         	VAR       	data      
+T1                       	000DF     	2         	VAR       	data      
+T2                       	000E1     	2         	VAR       	data      
+T3                       	000E3     	2         	VAR       	data      
+TMPQ                     	000E5     	2         	VAR       	data      
+DCOUNT                   	000E7     	2         	VAR       	data      
+TEN                      	000E9     	2         	VAR       	data      
+HUNDRED                  	000EB     	2         	VAR       	data      
+CODE                     	0002F     	-5        	SEGMENT   	(ITSELF)  
+MAIN                     	00000     	-1        	NEAR      	code      
+QUIT                     	0011A     	-1        	LABEL     	code      
+PNUM                     	0011F     	-1        	NEAR      	code      
+PN_LP                    	00123     	-1        	LABEL     	code      
+PN_RT                    	00161     	-1        	LABEL     	code      
+SNL                      	00162     	-1        	NEAR      	code      
+SN_LP                    	00162     	-1        	LABEL     	code      
+SN_SK                    	00172     	-1        	LABEL     	code      
+SN_RT                    	00175     	-1        	LABEL     	code      
+MUL32                    	00176     	-1        	NEAR      	code      
+DIV32                    	00198     	-1        	NEAR      	code      
+D32_BIG                  	001A2     	-1        	LABEL     	code      
+WLINE                    	001B8     	-1        	NEAR      	code      
+WL_LOOP                  	001D1     	-1        	LABEL     	code      
+WL_BIG                   	001F4     	-1        	LABEL     	code      
+WL_REVERSE               	0021D     	-1        	LABEL     	code      
+WL_REV_LP                	00229     	-1        	LABEL     	code      
+WL_WRITE                 	00241     	-1        	LABEL     	code      
+WL_CLR                   	00264     	-1        	LABEL     	code      
+===================================================================================================
+[ 3/18/2026  --  3:32:16 PM ] 
+< END >
+ 

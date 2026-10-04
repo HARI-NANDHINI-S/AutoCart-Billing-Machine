@@ -1,0 +1,184 @@
+EMU8086 GENERATED LISTING. MACHINE CODE <- SOURCE.
+ 
+validate.exe -- emu8086 assembler version: 4.08  
+ 
+[ 3/11/2026  --  2:17:51 PM ] 
+ 
+===================================================================================================
+[LINE]     LOC: MACHINE CODE                          SOURCE
+===================================================================================================
+ 
+[   1]        :                                       .model small
+[   2]        :                                       .stack 100h
+[   3]        :                                       
+[   4]        :                                       .data
+[   5]    0100: 69 6E 70 75 74 2E 74 78 74 00         infile  db "input.txt",0
+[   6]    010A: 72 65 73 75 6C 74 2E 74 78 74 00      outfile db "result.txt",0
+[   7]        :                                       
+[   8]    0115: 00 00 00 00 00 00 00 00 00 00 00 00   buffer  db 100 dup(0)
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00                         
+[   9]    0179: 30                                    res     db '0'
+[  10]        :                                       
+[  11]    017A: 00 00                                 handle  dw ?
+[  12]        :                                       
+[  13]        :                                       .code
+[  14]    0180:                                       main proc
+[  15]        :                                       
+[  16]    0180: B8 10 00                              mov ax,@data
+[  17]    0183: 8E D8                                 mov ds,ax
+[  18]        :                                       
+[  19]        :                                       ; OPEN INPUT FILE
+[  20]    0185: B4 3D                                 mov ah,3Dh
+[  21]    0187: B0 00                                 mov al,0
+[  22]    0189: BA 00 00                              lea dx,infile
+[  23]    018C: CD 21                                 int 21h
+[  24]    018E: 72 52                                 jc write_result
+[  25]        :                                       
+[  26]    0190: A3 7A 00                              mov handle,ax
+[  27]        :                                       
+[  28]        :                                       ; READ FILE
+[  29]    0193: B4 3F                                 mov ah,3Fh
+[  30]    0195: 8B 1E 7A 00                           mov bx,handle
+[  31]    0199: B9 64 00                              mov cx,100
+[  32]    019C: BA 15 00                              lea dx,buffer
+[  33]    019F: CD 21                                 int 21h
+[  34]        :                                       
+[  35]        :                                       ; CLOSE FILE
+[  36]    01A1: B4 3E                                 mov ah,3Eh
+[  37]    01A3: 8B 1E 7A 00                           mov bx,handle
+[  38]    01A7: CD 21                                 int 21h
+[  39]        :                                       
+[  40]    01A9: BE 15 00                              lea si,buffer
+[  41]        :                                       
+[  42]        :                                       ; NAME VALIDATION
+[  43]    01AC:                                       name_loop:
+[  44]        :                                       
+[  45]    01AC: AC                                    lodsb
+[  46]        :                                       
+[  47]    01AD: 3C 0D                                 cmp al,13
+[  48]    01AF: 74 14                                 je skip_lf
+[  49]        :                                       
+[  50]    01B1: 3C 0A                                 cmp al,10
+[  51]    01B3: 74 13                                 je phone_start
+[  52]        :                                       
+[  53]    01B5: 3C 20                                 cmp al,' '
+[  54]    01B7: 74 F3                                 je name_loop
+[  55]        :                                       
+[  56]    01B9: 24 DF                                 and al,0DFh
+[  57]        :                                       
+[  58]    01BB: 3C 41                                 cmp al,'A'
+[  59]    01BD: 72 1E                                 jb invalid
+[  60]        :                                       
+[  61]    01BF: 3C 5A                                 cmp al,'Z'
+[  62]    01C1: 77 1A                                 ja invalid
+[  63]        :                                       
+[  64]    01C3: EB E7                                 jmp name_loop
+[  65]        :                                       
+[  66]    01C5:                                       skip_lf:
+[  67]    01C5: AC                                    lodsb
+[  68]    01C6: EB 00                                 jmp phone_start
+[  69]        :                                       
+[  70]        :                                       ; PHONE VALIDATION
+[  71]    01C8:                                       phone_start:
+[  72]        :                                       
+[  73]    01C8: B9 0A 00                              mov cx,10
+[  74]        :                                       
+[  75]    01CB:                                       phone_loop:
+[  76]        :                                       
+[  77]    01CB: AC                                    lodsb
+[  78]        :                                       
+[  79]    01CC: 3C 30                                 cmp al,'0'
+[  80]    01CE: 72 0D                                 jb invalid
+[  81]        :                                       
+[  82]    01D0: 3C 39                                 cmp al,'9'
+[  83]    01D2: 77 09                                 ja invalid
+[  84]        :                                       
+[  85]    01D4: E2 F5                                 loop phone_loop
+[  86]        :                                       
+[  87]    01D6: C6 06 79 00 31                        mov res,'1'
+[  88]    01DB: EB 05                                 jmp write_result
+[  89]        :                                       
+[  90]    01DD:                                       invalid:
+[  91]    01DD: C6 06 79 00 30                        mov res,'0'
+[  92]        :                                       
+[  93]        :                                       ; CREATE RESULT FILE
+[  94]    01E2:                                       write_result:
+[  95]        :                                       
+[  96]    01E2: B4 3C                                 mov ah,3Ch
+[  97]    01E4: B9 00 00                              mov cx,0
+[  98]    01E7: BA 0A 00                              lea dx,outfile
+[  99]    01EA: CD 21                                 int 21h
+[ 100]    01EC: 72 19                                 jc exit_program
+[ 101]        :                                       
+[ 102]    01EE: A3 7A 00                              mov handle,ax
+[ 103]        :                                       
+[ 104]    01F1: B4 40                                 mov ah,40h
+[ 105]    01F3: 8B 1E 7A 00                           mov bx,handle
+[ 106]    01F7: B9 01 00                              mov cx,1
+[ 107]    01FA: BA 79 00                              lea dx,res
+[ 108]    01FD: CD 21                                 int 21h
+[ 109]        :                                       
+[ 110]    01FF: B4 3E                                 mov ah,3Eh
+[ 111]    0201: 8B 1E 7A 00                           mov bx,handle
+[ 112]    0205: CD 21                                 int 21h
+[ 113]        :                                       
+[ 114]    0207:                                       exit_program:
+[ 115]        :                                       
+[ 116]    0207: B4 4C                                 mov ah,4Ch
+[ 117]    0209: CD 21                                 int 21h
+[ 118]        :                                       
+[ 119]        :                                       main endp
+[ 120]        :                                       end main
+[ 121]        :                                       
+ 
+===================================================================================================
+ 
+EXE HEADER - bytes from 0000 to 01FF inclusive.
+
+0000: 4D      -   exe signature (M)
+0001: 5A      -   exe signature (Z)
+0002: 0B      -   bytes on last page (l.byte)
+0003: 00      -   bytes on last page (h.byte)
+0004: 03      -   512 byte pages in file (l.byte)
+0005: 00      -   512 byte pages in file (h.byte)
+0006: 01      -   relocations (l.byte)
+0007: 00      -   relocations (h.byte)
+0008: 20      -   paragraphs in header (l.byte)
+0009: 00      -   paragraphs in header (h.byte)
+000A: 00      -   minimum memory (l.byte)
+000B: 00      -   minimum memory (h.byte)
+000C: FF      -   maximum memory (l.byte)
+000D: FF      -   maximum memory (h.byte)
+000E: 00      -   SS - stack segment (l.byte)
+000F: 00      -   SS - stack segment (h.byte)
+0010: 00      -   SP - stack pointer (l.byte)
+0011: 01      -   SP - stack pointer (h.byte)
+0012: B6      -   check sum (l.byte)
+0013: 11      -   check sum (h.byte)
+0014: 00      -   IP - instruction pointer (l.byte)
+0015: 00      -   IP - instruction pointer (h.byte)
+0016: 18      -   CS - code segment (l.byte)
+0017: 00      -   CS - code segment (h.byte)
+0018: 1E      -   relocation table adress (l.byte)
+0019: 00      -   relocation table adress (h.byte)
+001A: 00      -   overlay number (l.byte)
+001B: 00      -   overlay number (h.byte)
+001C: 01      -   signature (l.byte)
+001D: 00      -   signature (h.byte)
+001E: 01      -   relocation table - offset inside segment (l.byte)
+001F: 00      -   relocation table - offset inside segment (h.byte)
+0020: 18      -   relocation table - segment anchor (l.byte)
+0021: 00      -   relocation table - segment anchor (h.byte)
+0022 to 01FF  -   reserved relocation area  (00) 
+
+
+
+
+===================================================================================================

@@ -1,0 +1,91 @@
+EMU8086 GENERATED LISTING. MACHINE CODE <- SOURCE.
+ 
+change.com -- emu8086 assembler version: 4.08  
+ 
+[ 4/1/2026  --  2:34:21 PM ] 
+ 
+===================================================================================================
+[LINE]     LOC: MACHINE CODE                          SOURCE
+===================================================================================================
+ 
+[   1]        :                                       ORG 100h
+[   2]        :                                       
+[   3]    0100:                                       start:
+[   4]        :                                       ; --- Calculation ---
+[   5]    0100: A1 58 01                              MOV  AX, [tendered]
+[   6]    0103: 8B 1E 5A 01                           MOV  BX, [due]
+[   7]    0107: 2B C3                                 SUB  AX, BX                ; AX = change
+[   8]        :                                       
+[   9]        :                                       ; --- Convert to ASCII ---
+[  10]    0109: B9 00 00                              MOV  CX, 0
+[  11]    010C: BB 0A 00                              MOV  BX, 10
+[  12]        :                                       
+[  13]    010F:                                       div_loop:
+[  14]    010F: 33 D2                                 XOR  DX, DX
+[  15]    0111: F7 F3                                 DIV  BX
+[  16]    0113: 52                                    PUSH DX
+[  17]    0114: 41                                    INC  CX
+[  18]    0115: 0B C0                                 OR   AX, AX                ; Faster way to check if AX is 0
+[  19]    0117: 75 F6                                 JNZ  div_loop
+[  20]        :                                       
+[  21]        :                                       ; --- Pop digits into buffer ---
+[  22]        :                                       ; Use LEA (Load Effective Address) to avoid "Wrong Parameter" errors
+[  23]    0119: BF 69 01                              LEA  DI, [buf]
+[  24]        :                                       
+[  25]    011C:                                       pop_loop:
+[  26]    011C: 58                                    POP  AX
+[  27]    011D: 04 30                                 ADD  AL, '0'
+[  28]    011F: 88 05                                 MOV  [DI], AL              ; Manual store to be safe
+[  29]    0121: 47                                    INC  DI
+[  30]    0122: E2 F8                                 LOOP pop_loop
+[  31]        :                                       
+[  32]        :                                       ; --- Append CR + LF ---
+[  33]    0124: C6 05 0D                              MOV  BYTE [DI], 0Dh        ; Carriage Return
+[  34]    0127: 47                                    INC  DI
+[  35]    0128: C6 05 0A                              MOV  BYTE [DI], 0Ah        ; Line Feed
+[  36]    012B: 47                                    INC  DI
+[  37]        :                                       
+[  38]        :                                       ; --- File Operations ---
+[  39]        :                                       ; Create file
+[  40]    012C: B4 3C                                 MOV  AH, 3Ch
+[  41]    012E: B9 00 00                              MOV  CX, 0
+[  42]    0131: BA 5E 01                              LEA  DX, [fname]
+[  43]    0134: CD 21                                 INT  21h
+[  44]    0136: 72 1A                                 JC   exit_prog             ; Exit if error (Carry Flag set)
+[  45]    0138: A3 5C 01                              MOV  [handle], AX
+[  46]        :                                       
+[  47]        :                                       ; Write to file
+[  48]    013B: 8B 1E 5C 01                           MOV  BX, [handle]
+[  49]    013F: B4 40                                 MOV  AH, 40h
+[  50]    0141: BA 69 01                              LEA  DX, [buf]             ; Point to start of buffer
+[  51]    0144: 8B CF                                 MOV  CX, DI
+[  52]    0146: 2B CA                                 SUB  CX, DX                ; Calculate length: Current DI - Start Address
+[  53]    0148: CD 21                                 INT  21h
+[  54]        :                                       
+[  55]        :                                       ; Close file
+[  56]    014A: B4 3E                                 MOV  AH, 3Eh
+[  57]    014C: 8B 1E 5C 01                           MOV  BX, [handle]
+[  58]    0150: CD 21                                 INT  21h
+[  59]        :                                       
+[  60]    0152:                                       exit_prog:
+[  61]    0152: B4 4C                                 MOV  AH, 4Ch
+[  62]    0154: 32 C0                                 XOR  AL, AL
+[  63]    0156: CD 21                                 INT  21h
+[  64]        :                                       
+[  65]        :                                       ; --- Data Section ---
+[  66]        :                                       ; Ensure all labels are followed by their type (DW/DB)
+[  67]    0158: 50 C3                                 tendered  DW 50000
+[  68]    015A: C4 86                                 due       DW 34500
+[  69]    015C: 00 00                                 handle    DW 0
+[  70]    015E: 52 45 53 55 4C 54 2E 54 58 54 00      fname     DB 'RESULT.TXT', 0
+[  71]    0169: 00 00 00 00 00 00 00 00 00 00 00 00   buf       DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 ; Defined explicitly
+                00 00 00 00 00 00 00 00             
+[  72]        :                                       
+ 
+===================================================================================================
+ 
+
+
+
+
+===================================================================================================

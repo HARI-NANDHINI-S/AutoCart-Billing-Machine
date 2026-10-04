@@ -1,0 +1,17 @@
+< THE SYMBOL TABLE >  change.com  --  emu8086 assembler version: 4.08 
+===================================================================================================
+Name                     	Offset    	Size      	Type      	Segment   
+===================================================================================================
+START                    	00100     	-1        	LABEL     	(NOSEG)   
+DIV_LOOP                 	0010F     	-1        	LABEL     	(NOSEG)   
+POP_LOOP                 	0011C     	-1        	LABEL     	(NOSEG)   
+EXIT_PROG                	00152     	-1        	LABEL     	(NOSEG)   
+TENDERED                 	00158     	2         	VAR       	(NOSEG)   
+DUE                      	0015A     	2         	VAR       	(NOSEG)   
+HANDLE                   	0015C     	2         	VAR       	(NOSEG)   
+FNAME                    	0015E     	1         	VAR       	(NOSEG)   
+BUF                      	00169     	1         	VAR       	(NOSEG)   
+===================================================================================================
+[ 4/1/2026  --  2:34:21 PM ] 
+< END >
+ 

@@ -1,0 +1,155 @@
+{
+  "customer": {
+    "name": "",
+    "points": 2016,
+    "total_spent": 20277.95,
+    "tier": "Gold",
+    "history": [
+      {
+        "type": "earn",
+        "points": 170,
+        "amount_rs": 1706.04,
+        "date": "2026-04-05T11:54:57.030709"
+      },
+      {
+        "type": "earn",
+        "points": 72,
+        "amount_rs": 722.92,
+        "date": "2026-04-05T11:59:20.545919"
+      },
+      {
+        "type": "earn",
+        "points": 332,
+        "amount_rs": 3327.16,
+        "date": "2026-04-05T12:22:12.012200"
+      },
+      {
+        "type": "earn",
+        "points": 33,
+        "amount_rs": 336.56,
+        "date": "2026-04-05T12:33:54.684572"
+      },
+      {
+        "type": "earn",
+        "points": 87,
+        "amount_rs": 874.5,
+        "date": "2026-04-05T12:37:38.331996"
+      },
+      {
+        "type": "earn",
+        "points": 151,
+        "amount_rs": 1515.8,
+        "date": "2026-04-05T12:49:57.381345"
+      },
+      {
+        "type": "earn",
+        "points": 57,
+        "amount_rs": 577.17,
+        "date": "2026-04-05T12:52:14.775312"
+      },
+      {
+        "type": "earn",
+        "points": 53,
+        "amount_rs": 535.5,
+        "date": "2026-04-05T12:59:31.868021"
+      },
+      {
+        "type": "earn",
+        "points": 26,
+        "amount_rs": 267.75,
+        "date": "2026-04-05T13:04:00.112367"
+      },
+      {
+        "type": "earn",
+        "points": 10,
+        "amount_rs": 106.4,
+        "date": "2026-04-05T13:08:26.009036"
+      },
+      {
+        "type": "earn",
+        "points": 9,
+        "amount_rs": 95.76,
+        "date": "2026-04-05T13:09:28.846713"
+      },
+      {
+        "type": "earn",
+        "points": 190,
+        "amount_rs": 1900.06,
+        "date": "2026-04-05T22:51:31.881957"
+      },
+      {
+        "type": "earn",
+        "points": 80,
+        "amount_rs": 803.25,
+        "date": "2026-04-05T23:05:04.543815"
+      },
+      {
+        "type": "earn",
+        "points": 54,
+        "amount_rs": 543.58,
+        "date": "2026-04-06T09:34:07.256960"
+      },
+      {
+        "type": "earn",
+        "points": 9,
+        "amount_rs": 95.76,
+        "date": "2026-04-06T11:33:18.034832"
+      },
+      {
+        "type": "earn",
+        "points": 21,
+        "amount_rs": 216.72,
+        "date": "2026-04-06T11:42:36.335133"
+      },
+      {
+        "type": "earn",
+        "points": 48,
+        "amount_rs": 481.95,
+        "date": "2026-04-07T08:54:17.182862"
+      },
+      {
+        "type": "earn",
+        "points": 190,
+        "amount_rs": 1900.06,
+        "date": "2026-04-07T11:56:28.399640"
+      },
+      {
+        "type": "earn",
+        "points": 9,
+        "amount_rs": 95.76,
+        "date": "2026-04-07T12:08:10.076672"
+      },
+      {
+        "type": "earn",
+        "points": 190,
+        "amount_rs": 1900.26,
+        "date": "2026-04-07T12:12:28.313430"
+      },
+      {
+        "type": "earn",
+        "points": 70,
+        "amount_rs": 706.81,
+        "date": "2026-04-08T13:56:42.421031"
+      },
+      {
+        "type": "earn",
+        "points": 116,
+        "amount_rs": 1166.0,
+        "date": "2026-04-08T13:57:49.299332"
+      },
+      {
+        "type": "earn",
+        "points": 29,
+        "amount_rs": 295.78,
+        "date": "2026-04-14T18:50:48.444951"
+      },
+      {
+        "type": "earn",
+        "points": 10,
+        "amount_rs": 106.4,
+        "date": "2026-04-14T18:51:55.825782"
+      }
+    ],
+    "joined": "2026-04-05T11:54:57.030626"
+  }
+}

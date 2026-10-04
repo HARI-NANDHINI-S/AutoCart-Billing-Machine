@@ -1,0 +1,477 @@
+EMU8086 GENERATED LISTING. MACHINE CODE <- SOURCE.
+ 
+calc.exe -- emu8086 assembler version: 4.08  
+ 
+[ 3/18/2026  --  3:32:16 PM ] 
+ 
+===================================================================================================
+[LINE]     LOC: MACHINE CODE                          SOURCE
+===================================================================================================
+ 
+[   1]        :                                       ; ============================================================
+[   2]        :                                       ; HyperMarket Pro - Bill Calculator
+[   3]        :                                       ; EMU 8086 COMPATIBLE - FULLY DEBUGGED
+[   4]        :                                       ; ============================================================
+[   5]        :                                       ; Rules followed:
+[   6]        :                                       ;  - No 32-bit registers (EAX etc)
+[   7]        :                                       ;  - No XCHG with memory ([SP] not supported in EMU8086)
+[   8]        :                                       ;  - No MUL/DIV with immediate values
+[   9]        :                                       ;  - No PUSH with immediate values
+[  10]        :                                       ;  - All memory temps used instead of clever stack tricks
+[  11]        :                                       ;  - PROC declared as NEAR
+[  12]        :                                       ;  - All labels unique
+[  13]        :                                       ;
+[  14]        :                                       ; INPUT  : C:\HYPERPOS\INPUT.TXT
+[  15]        :                                       ;  Line1: SUBTOTAL paise   e.g. 93500
+[  16]        :                                       ;  Line2: DISCOUNT percent e.g. 10
+[  17]        :                                       ;  Line3: GST      percent e.g. 18
+[  18]        :                                       ;  Line4: COUPON   paise   e.g. 5000
+[  19]        :                                       ;
+[  20]        :                                       ; OUTPUT : C:\HYPERPOS\OUTPUT.TXT
+[  21]        :                                       ;  Line1: SUBTOTAL
+[  22]        :                                       ;  Line2: DISCOUNT
+[  23]        :                                       ;  Line3: GST_AMOUNT
+[  24]        :                                       ;  Line4: COUPON
+[  25]        :                                       ;  Line5: GRAND_TOTAL
+[  26]        :                                       ; ============================================================
+[  27]        :                                       
+[  28]        :                                       .MODEL SMALL
+[  29]        :                                       .STACK 200h
+[  30]        :                                       
+[  31]        :                                       .DATA
+[  32]    0200: 43 3A 5C 48 59 50 45 52 50 4F 53 5C   fname_in   DB 'C:\HYPERPOS\INPUT.TXT',0
+                49 4E 50 55 54 2E 54 58 54 00       
+[  33]    0216: 43 3A 5C 48 59 50 45 52 50 4F 53 5C   fname_out  DB 'C:\HYPERPOS\OUTPUT.TXT',0
+                4F 55 54 50 55 54 2E 54 58 54 00    
+[  34]    022D: 00 00                                 hdl_in     DW 0
+[  35]    022F: 00 00                                 hdl_out    DW 0
+[  36]    0231: 00 00 00 00 00 00 00 00 00 00 00 00   rbuf       DB 128 DUP(0)
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00             
+[  37]    02B1: 00 00 00 00 00 00 00 00 00 00 00 00   wbuf       DB 16  DUP(0)
+                00 00 00 00                         
+[  38]    02C1: 0D 0A                                 crlf       DB 13,10
+[  39]        :                                       
+[  40]        :                                       ; 32-bit values stored as lo+hi word pairs
+[  41]    02C3: 00 00                                 sub_lo     DW 0
+[  42]    02C5: 00 00                                 sub_hi     DW 0
+[  43]    02C7: 00 00                                 dpc        DW 0
+[  44]    02C9: 00 00                                 gpc        DW 0
+[  45]    02CB: 00 00                                 cpn_lo     DW 0
+[  46]    02CD: 00 00                                 cpn_hi     DW 0
+[  47]    02CF: 00 00                                 dis_lo     DW 0
+[  48]    02D1: 00 00                                 dis_hi     DW 0
+[  49]    02D3: 00 00                                 gst_lo     DW 0
+[  50]    02D5: 00 00                                 gst_hi     DW 0
+[  51]    02D7: 00 00                                 gnd_lo     DW 0
+[  52]    02D9: 00 00                                 gnd_hi     DW 0
+[  53]    02DB: 00 00                                 aft_lo     DW 0
+[  54]    02DD: 00 00                                 aft_hi     DW 0
+[  55]        :                                       
+[  56]        :                                       ; general purpose temps (avoids register conflicts)
+[  57]    02DF: 00 00                                 t1         DW 0
+[  58]    02E1: 00 00                                 t2         DW 0
+[  59]    02E3: 00 00                                 t3         DW 0
+[  60]    02E5: 00 00                                 tmpq       DW 0
+[  61]    02E7: 00 00                                 dcount     DW 0
+[  62]    02E9: 0A 00                                 TEN        DW 10
+[  63]    02EB: 64 00                                 HUNDRED    DW 100
+[  64]        :                                       
+[  65]        :                                       .CODE
+[  66]        :                                       
+[  67]        :                                       ; =============================================================================
+[  68]    02F0:                                       MAIN PROC
+[  69]    02F0: B8 20 00                              MOV  AX, @DATA
+[  70]    02F3: 8E D8                                 MOV  DS, AX
+[  71]        :                                       
+[  72]        :                                       ; open INPUT.TXT
+[  73]    02F5: B4 3D                                 MOV  AH, 3Dh
+[  74]    02F7: B0 00                                 MOV  AL, 0
+[  75]    02F9: BA 00 00                              LEA  DX, fname_in
+[  76]    02FC: CD 21                                 INT  21h
+[  77]    02FE: 73 03 E9 07 01                        JC   QUIT
+[  78]    0303: A3 2D 00                              MOV  hdl_in, AX
+[  79]        :                                       
+[  80]        :                                       ; read
+[  81]    0306: B4 3F                                 MOV  AH, 3Fh
+[  82]    0308: 8B 1E 2D 00                           MOV  BX, hdl_in
+[  83]    030C: B9 7F 00                              MOV  CX, 127
+[  84]    030F: BA 31 00                              LEA  DX, rbuf
+[  85]    0312: CD 21                                 INT  21h
+[  86]    0314: 9C                                    PUSHF
+[  87]    0315: B4 3E                                 MOV  AH, 3Eh
+[  88]    0317: 8B 1E 2D 00                           MOV  BX, hdl_in
+[  89]    031B: CD 21                                 INT  21h
+[  90]    031D: 9D                                    POPF
+[  91]    031E: 73 03 E9 E7 00                        JC   QUIT
+[  92]    0323: 8B D8                                 MOV  BX, AX
+[  93]    0325: C6 47 31 00                           MOV  BYTE PTR rbuf[BX], 0
+[  94]        :                                       
+[  95]        :                                       ; parse
+[  96]    0329: BE 31 00                              LEA  SI, rbuf
+[  97]    032C: E8 E0 00                              CALL PNUM
+[  98]    032F: A3 C3 00                              MOV  sub_lo, AX
+[  99]    0332: 89 16 C5 00                           MOV  sub_hi, DX
+[ 100]    0336: E8 19 01                              CALL SNL
+[ 101]        :                                       
+[ 102]    0339: E8 D3 00                              CALL PNUM
+[ 103]    033C: A3 C7 00                              MOV  dpc, AX
+[ 104]    033F: E8 10 01                              CALL SNL
+[ 105]        :                                       
+[ 106]    0342: E8 CA 00                              CALL PNUM
+[ 107]    0345: A3 C9 00                              MOV  gpc, AX
+[ 108]    0348: E8 07 01                              CALL SNL
+[ 109]        :                                       
+[ 110]    034B: E8 C1 00                              CALL PNUM
+[ 111]    034E: A3 CB 00                              MOV  cpn_lo, AX
+[ 112]    0351: 89 16 CD 00                           MOV  cpn_hi, DX
+[ 113]        :                                       
+[ 114]        :                                       ; DISCOUNT = sub * dpc / 100
+[ 115]    0355: A1 C3 00                              MOV  AX, sub_lo
+[ 116]    0358: 8B 16 C5 00                           MOV  DX, sub_hi
+[ 117]    035C: 8B 1E C7 00                           MOV  BX, dpc
+[ 118]    0360: E8 03 01                              CALL MUL32
+[ 119]    0363: 8B 1E EB 00                           MOV  BX, HUNDRED
+[ 120]    0367: E8 1E 01                              CALL DIV32
+[ 121]    036A: A3 CF 00                              MOV  dis_lo, AX
+[ 122]    036D: 89 16 D1 00                           MOV  dis_hi, DX
+[ 123]        :                                       
+[ 124]        :                                       ; AFTER = sub - discount
+[ 125]    0371: A1 C3 00                              MOV  AX, sub_lo
+[ 126]    0374: 8B 16 C5 00                           MOV  DX, sub_hi
+[ 127]    0378: 2B 06 CF 00                           SUB  AX, dis_lo
+[ 128]    037C: 1B 16 D1 00                           SBB  DX, dis_hi
+[ 129]    0380: A3 DB 00                              MOV  aft_lo, AX
+[ 130]    0383: 89 16 DD 00                           MOV  aft_hi, DX
+[ 131]        :                                       
+[ 132]        :                                       ; GST = after * gpc / 100
+[ 133]    0387: A1 DB 00                              MOV  AX, aft_lo
+[ 134]    038A: 8B 16 DD 00                           MOV  DX, aft_hi
+[ 135]    038E: 8B 1E C9 00                           MOV  BX, gpc
+[ 136]    0392: E8 D1 00                              CALL MUL32
+[ 137]    0395: 8B 1E EB 00                           MOV  BX, HUNDRED
+[ 138]    0399: E8 EC 00                              CALL DIV32
+[ 139]    039C: A3 D3 00                              MOV  gst_lo, AX
+[ 140]    039F: 89 16 D5 00                           MOV  gst_hi, DX
+[ 141]        :                                       
+[ 142]        :                                       ; GRAND = after + gst - coupon
+[ 143]    03A3: A1 DB 00                              MOV  AX, aft_lo
+[ 144]    03A6: 8B 16 DD 00                           MOV  DX, aft_hi
+[ 145]    03AA: 03 06 D3 00                           ADD  AX, gst_lo
+[ 146]    03AE: 13 16 D5 00                           ADC  DX, gst_hi
+[ 147]    03B2: 2B 06 CB 00                           SUB  AX, cpn_lo
+[ 148]    03B6: 1B 16 CD 00                           SBB  DX, cpn_hi
+[ 149]    03BA: A3 D7 00                              MOV  gnd_lo, AX
+[ 150]    03BD: 89 16 D9 00                           MOV  gnd_hi, DX
+[ 151]        :                                       
+[ 152]        :                                       ; create OUTPUT.TXT
+[ 153]    03C1: B4 3C                                 MOV  AH, 3Ch
+[ 154]    03C3: B9 00 00                              MOV  CX, 0
+[ 155]    03C6: BA 16 00                              LEA  DX, fname_out
+[ 156]    03C9: CD 21                                 INT  21h
+[ 157]    03CB: 72 3D                                 JC   QUIT
+[ 158]    03CD: A3 2F 00                              MOV  hdl_out, AX
+[ 159]        :                                       
+[ 160]        :                                       ; write 5 lines
+[ 161]    03D0: A1 C3 00                              MOV  AX, sub_lo
+[ 162]    03D3: 8B 16 C5 00                           MOV  DX, sub_hi
+[ 163]    03D7: E8 CE 00                              CALL WLINE
+[ 164]        :                                       
+[ 165]    03DA: A1 CF 00                              MOV  AX, dis_lo
+[ 166]    03DD: 8B 16 D1 00                           MOV  DX, dis_hi
+[ 167]    03E1: E8 C4 00                              CALL WLINE
+[ 168]        :                                       
+[ 169]    03E4: A1 D3 00                              MOV  AX, gst_lo
+[ 170]    03E7: 8B 16 D5 00                           MOV  DX, gst_hi
+[ 171]    03EB: E8 BA 00                              CALL WLINE
+[ 172]        :                                       
+[ 173]    03EE: A1 CB 00                              MOV  AX, cpn_lo
+[ 174]    03F1: 8B 16 CD 00                           MOV  DX, cpn_hi
+[ 175]    03F5: E8 B0 00                              CALL WLINE
+[ 176]        :                                       
+[ 177]    03F8: A1 D7 00                              MOV  AX, gnd_lo
+[ 178]    03FB: 8B 16 D9 00                           MOV  DX, gnd_hi
+[ 179]    03FF: E8 A6 00                              CALL WLINE
+[ 180]        :                                       
+[ 181]        :                                       ; close output
+[ 182]    0402: B4 3E                                 MOV  AH, 3Eh
+[ 183]    0404: 8B 1E 2F 00                           MOV  BX, hdl_out
+[ 184]    0408: CD 21                                 INT  21h
+[ 185]        :                                       
+[ 186]    040A:                                       QUIT:
+[ 187]    040A: B8 00 4C                              MOV  AX, 4C00h
+[ 188]    040D: CD 21                                 INT  21h
+[ 189]        :                                       MAIN ENDP
+[ 190]        :                                       
+[ 191]        :                                       ; =============================================================================
+[ 192]        :                                       ; PNUM: parse decimal ASCII at DS:SI -> DX:AX
+[ 193]        :                                       ;   Uses memory temps t1,t2,t3 -- NO XCHG, NO stack tricks
+[ 194]        :                                       ; =============================================================================
+[ 195]    040F:                                       PNUM PROC NEAR
+[ 196]    040F: 33 C0                                 XOR  AX, AX
+[ 197]    0411: 33 D2                                 XOR  DX, DX
+[ 198]        :                                       
+[ 199]    0413:                                       PN_LP:
+[ 200]    0413: 8A 1C                                 MOV  BL, BYTE PTR [SI]
+[ 201]    0415: 80 FB 30                              CMP  BL, '0'
+[ 202]    0418: 72 37                                 JB   PN_RT
+[ 203]    041A: 80 FB 39                              CMP  BL, '9'
+[ 204]    041D: 77 32                                 JA   PN_RT
+[ 205]        :                                       
+[ 206]        :                                       ; multiply accumulator DX:AX by 10 using memory temps
+[ 207]        :                                       ; save current values
+[ 208]    041F: A3 DF 00                              MOV  t1, AX              ; t1 = current lo
+[ 209]    0422: 89 16 E1 00                           MOV  t2, DX              ; t2 = current hi
+[ 210]        :                                       
+[ 211]        :                                       ; compute lo * 10
+[ 212]    0426: A1 DF 00                              MOV  AX, t1
+[ 213]    0429: F7 26 E9 00                           MUL  TEN                 ; DX:AX = t1 * 10
+[ 214]    042D: A3 E3 00                              MOV  t3, AX              ; t3 = lo product
+[ 215]    0430: 89 16 DF 00                           MOV  t1, DX              ; t1 = carry from lo multiply
+[ 216]        :                                       
+[ 217]        :                                       ; compute hi * 10
+[ 218]    0434: A1 E1 00                              MOV  AX, t2
+[ 219]    0437: F7 26 E9 00                           MUL  TEN                 ; DX:AX = t2 * 10 (ignore DX)
+[ 220]    043B: 03 06 DF 00                           ADD  AX, t1              ; new hi = (t2*10) + carry
+[ 221]    043F: 8B D0                                 MOV  DX, AX              ; DX = new hi word
+[ 222]    0441: A1 E3 00                              MOV  AX, t3              ; AX = new lo word
+[ 223]        :                                       
+[ 224]        :                                       ; add digit
+[ 225]    0444: 80 EB 30                              SUB  BL, '0'
+[ 226]    0447: 32 FF                                 XOR  BH, BH
+[ 227]    0449: 03 C3                                 ADD  AX, BX
+[ 228]    044B: 83 D2 00                              ADC  DX, 0
+[ 229]        :                                       
+[ 230]    044E: 46                                    INC  SI
+[ 231]    044F: EB C2                                 JMP  PN_LP
+[ 232]        :                                       
+[ 233]    0451:                                       PN_RT:
+[ 234]    0451: C3                                    RET
+[ 235]        :                                       PNUM ENDP
+[ 236]        :                                       
+[ 237]        :                                       ; =============================================================================
+[ 238]        :                                       ; SNL: skip CR/LF at DS:SI, stop at null or other char
+[ 239]        :                                       ; =============================================================================
+[ 240]    0452:                                       SNL PROC NEAR
+[ 241]    0452:                                       SN_LP:
+[ 242]    0452: 8A 04                                 MOV  AL, BYTE PTR [SI]
+[ 243]    0454: 3C 00                                 CMP  AL, 0
+[ 244]    0456: 74 0D                                 JE   SN_RT
+[ 245]    0458: 3C 0D                                 CMP  AL, 13
+[ 246]    045A: 74 06                                 JE   SN_SK
+[ 247]    045C: 3C 0A                                 CMP  AL, 10
+[ 248]    045E: 74 02                                 JE   SN_SK
+[ 249]    0460: EB 03                                 JMP  SN_RT
+[ 250]    0462:                                       SN_SK:
+[ 251]    0462: 46                                    INC  SI
+[ 252]    0463: EB ED                                 JMP  SN_LP
+[ 253]    0465:                                       SN_RT:
+[ 254]    0465: C3                                    RET
+[ 255]        :                                       SNL ENDP
+[ 256]        :                                       
+[ 257]        :                                       ; =============================================================================
+[ 258]        :                                       ; MUL32: DX:AX * BX -> DX:AX  (32x16 multiply)
+[ 259]        :                                       ;   Uses memory temps t1,t2,t3 -- NO XCHG with memory
+[ 260]        :                                       ; =============================================================================
+[ 261]    0466:                                       MUL32 PROC NEAR
+[ 262]    0466: A3 DF 00                              MOV  t1, AX              ; t1 = lo word of multiplicand
+[ 263]    0469: 89 16 E1 00                           MOV  t2, DX              ; t2 = hi word of multiplicand
+[ 264]        :                                       
+[ 265]        :                                       ; lo * BX
+[ 266]    046D: A1 DF 00                              MOV  AX, t1
+[ 267]    0470: F7 E3                                 MUL  BX                  ; DX:AX = lo * BX
+[ 268]    0472: A3 E3 00                              MOV  t3, AX              ; t3 = lo product
+[ 269]    0475: 89 16 DF 00                           MOV  t1, DX              ; t1 = carry from lo
+[ 270]        :                                       
+[ 271]        :                                       ; hi * BX
+[ 272]    0479: A1 E1 00                              MOV  AX, t2
+[ 273]    047C: F7 E3                                 MUL  BX                  ; DX:AX = hi * BX (ignore DX)
+[ 274]    047E: 03 06 DF 00                           ADD  AX, t1              ; new hi = (hi*BX) + carry
+[ 275]    0482: 8B D0                                 MOV  DX, AX              ; DX = result hi word
+[ 276]    0484: A1 E3 00                              MOV  AX, t3              ; AX = result lo word
+[ 277]    0487: C3                                    RET
+[ 278]        :                                       MUL32 ENDP
+[ 279]        :                                       
+[ 280]        :                                       ; =============================================================================
+[ 281]        :                                       ; DIV32: DX:AX / BX -> DX:AX quotient
+[ 282]        :                                       ;   Uses tmpq for hi quotient -- NO XCHG with memory
+[ 283]        :                                       ; =============================================================================
+[ 284]    0488:                                       DIV32 PROC NEAR
+[ 285]    0488: 83 FA 00                              CMP  DX, 0
+[ 286]    048B: 75 05                                 JNE  D32_BIG
+[ 287]        :                                       
+[ 288]        :                                       ; fast path: DX=0, simple 16-bit divide
+[ 289]    048D: F7 F3                                 DIV  BX
+[ 290]    048F: 33 D2                                 XOR  DX, DX
+[ 291]    0491: C3                                    RET
+[ 292]        :                                       
+[ 293]    0492:                                       D32_BIG:
+[ 294]        :                                       ; full 32-bit / 16-bit
+[ 295]    0492: A3 DF 00                              MOV  t1, AX              ; save lo dividend
+[ 296]    0495: 8B C2                                 MOV  AX, DX
+[ 297]    0497: 33 D2                                 XOR  DX, DX
+[ 298]    0499: F7 F3                                 DIV  BX                  ; hi / BX -> AX=hi_quot, DX=hi_rem
+[ 299]    049B: A3 E5 00                              MOV  tmpq, AX            ; save hi quotient to memory
+[ 300]    049E: A1 DF 00                              MOV  AX, t1              ; restore lo dividend
+[ 301]        :                                       ; DX = hi_rem (feeds as upper word)
+[ 302]    04A1: F7 F3                                 DIV  BX                  ; DX:AX / BX -> AX=lo_quot, DX=remainder
+[ 303]    04A3: 8B 16 E5 00                           MOV  DX, tmpq            ; DX:AX = full quotient
+[ 304]    04A7: C3                                    RET
+[ 305]        :                                       DIV32 ENDP
+[ 306]        :                                       
+[ 307]        :                                       ; =============================================================================
+[ 308]        :                                       ; WLINE: write DX:AX as decimal + CRLF to hdl_out
+[ 309]        :                                       ;   Extracts digits by dividing by 10, stores in wbuf, writes via INT 21h
+[ 310]        :                                       ;   Uses dcount (memory) for byte count -- NO MOV CX,CX bug
+[ 311]        :                                       ;   No PUSH DS around INT 21h -- would corrupt segment register
+[ 312]        :                                       ; =============================================================================
+[ 313]    04A8:                                       WLINE PROC NEAR
+[ 314]    04A8: C7 06 E7 00 00 00                     MOV  dcount, 0
+[ 315]        :                                       
+[ 316]        :                                       ; check if zero
+[ 317]    04AE: 8B CA                                 MOV  CX, DX
+[ 318]    04B0: 0B C8                                 OR   CX, AX
+[ 319]    04B2: 75 0D                                 JNZ  WL_LOOP
+[ 320]        :                                       
+[ 321]        :                                       ; value is zero
+[ 322]    04B4: C6 06 B1 00 30                        MOV  BYTE PTR wbuf, '0'
+[ 323]    04B9: C7 06 E7 00 01 00                     MOV  dcount, 1
+[ 324]    04BF: EB 70                                 JMP  WL_WRITE
+[ 325]        :                                       
+[ 326]    04C1:                                       WL_LOOP:
+[ 327]        :                                       ; quit when DX:AX = 0
+[ 328]    04C1: 8B CA                                 MOV  CX, DX
+[ 329]    04C3: 0B C8                                 OR   CX, AX
+[ 330]    04C5: 74 46                                 JZ   WL_REVERSE
+[ 331]        :                                       
+[ 332]    04C7: 83 FA 00                              CMP  DX, 0
+[ 333]    04CA: 75 18                                 JNE  WL_BIG
+[ 334]        :                                       
+[ 335]        :                                       ; 16-bit path
+[ 336]    04CC: B9 0A 00                              MOV  CX, 10
+[ 337]    04CF: F7 F1                                 DIV  CX                  ; AX=quot DX=remainder
+[ 338]    04D1: 8B 1E E7 00                           MOV  BX, dcount
+[ 339]    04D5: 80 C2 30                              ADD  DL, '0'
+[ 340]    04D8: 88 97 B1 00                           MOV  BYTE PTR wbuf[BX], DL
+[ 341]    04DC: FF 06 E7 00                           INC  dcount
+[ 342]    04E0: 33 D2                                 XOR  DX, DX
+[ 343]    04E2: EB DD                                 JMP  WL_LOOP
+[ 344]        :                                       
+[ 345]    04E4:                                       WL_BIG:
+[ 346]        :                                       ; 32-bit divide by 10
+[ 347]    04E4: A3 DF 00                              MOV  t1, AX              ; save lo dividend
+[ 348]    04E7: 8B C2                                 MOV  AX, DX
+[ 349]    04E9: 33 D2                                 XOR  DX, DX
+[ 350]    04EB: B9 0A 00                              MOV  CX, 10
+[ 351]    04EE: F7 F1                                 DIV  CX                  ; hi/10 -> AX=hi_quot DX=hi_rem
+[ 352]    04F0: A3 E5 00                              MOV  tmpq, AX            ; save hi quot
+[ 353]    04F3: A1 DF 00                              MOV  AX, t1              ; restore lo dividend
+[ 354]    04F6: F7 F1                                 DIV  CX                  ; DX:AX/10 -> AX=lo_quot DX=digit
+[ 355]    04F8: 8B 1E E7 00                           MOV  BX, dcount
+[ 356]    04FC: 80 C2 30                              ADD  DL, '0'
+[ 357]    04FF: 88 97 B1 00                           MOV  BYTE PTR wbuf[BX], DL
+[ 358]    0503: FF 06 E7 00                           INC  dcount
+[ 359]    0507: 8B 16 E5 00                           MOV  DX, tmpq            ; restore hi quot
+[ 360]    050B: EB B4                                 JMP  WL_LOOP
+[ 361]        :                                       
+[ 362]    050D:                                       WL_REVERSE:
+[ 363]        :                                       ; digits in wbuf are in reverse order (LSB first), reverse them
+[ 364]    050D: 8B 0E E7 00                           MOV  CX, dcount
+[ 365]    0511: BE 00 00                              MOV  SI, 0               ; start index
+[ 366]    0514: 8B 3E E7 00                           MOV  DI, dcount
+[ 367]    0518: 4F                                    DEC  DI                  ; end index
+[ 368]        :                                       
+[ 369]    0519:                                       WL_REV_LP:
+[ 370]    0519: 3B F7                                 CMP  SI, DI
+[ 371]    051B: 7D 14                                 JGE  WL_WRITE
+[ 372]        :                                       
+[ 373]        :                                       ; swap wbuf[SI] and wbuf[DI]
+[ 374]    051D: 8A 84 B1 00                           MOV  AL, BYTE PTR wbuf[SI]
+[ 375]    0521: 8A 9D B1 00                           MOV  BL, BYTE PTR wbuf[DI]
+[ 376]    0525: 88 9C B1 00                           MOV  BYTE PTR wbuf[SI], BL
+[ 377]    0529: 88 85 B1 00                           MOV  BYTE PTR wbuf[DI], AL
+[ 378]    052D: 46                                    INC  SI
+[ 379]    052E: 4F                                    DEC  DI
+[ 380]    052F: EB E8                                 JMP  WL_REV_LP
+[ 381]        :                                       
+[ 382]    0531:                                       WL_WRITE:
+[ 383]        :                                       ; write digit bytes
+[ 384]    0531: B4 40                                 MOV  AH, 40h
+[ 385]    0533: 8B 1E 2F 00                           MOV  BX, hdl_out
+[ 386]    0537: 8B 0E E7 00                           MOV  CX, dcount          ; byte count from memory var -- FIXED
+[ 387]    053B: BA B1 00                              LEA  DX, wbuf
+[ 388]    053E: CD 21                                 INT  21h
+[ 389]        :                                       
+[ 390]        :                                       ; write CRLF
+[ 391]    0540: B4 40                                 MOV  AH, 40h
+[ 392]    0542: 8B 1E 2F 00                           MOV  BX, hdl_out
+[ 393]    0546: B9 02 00                              MOV  CX, 2
+[ 394]    0549: BA C1 00                              LEA  DX, crlf
+[ 395]    054C: CD 21                                 INT  21h
+[ 396]        :                                       
+[ 397]        :                                       ; clear wbuf for next call
+[ 398]    054E: B9 10 00                              MOV  CX, 16
+[ 399]    0551: BF B1 00                              LEA  DI, wbuf
+[ 400]    0554:                                       WL_CLR:
+[ 401]    0554: C6 05 00                              MOV  BYTE PTR [DI], 0
+[ 402]    0557: 47                                    INC  DI
+[ 403]    0558: E2 FA                                 LOOP WL_CLR
+[ 404]        :                                       
+[ 405]    055A: C3                                    RET
+[ 406]        :                                       WLINE ENDP
+[ 407]        :                                       
+[ 408]        :                                       END MAIN
+[ 409]        :                                       
+ 
+===================================================================================================
+ 
+EXE HEADER - bytes from 0000 to 01FF inclusive.
+
+0000: 4D      -   exe signature (M)
+0001: 5A      -   exe signature (Z)
+0002: 5B      -   bytes on last page (l.byte)
+0003: 01      -   bytes on last page (h.byte)
+0004: 04      -   512 byte pages in file (l.byte)
+0005: 00      -   512 byte pages in file (h.byte)
+0006: 01      -   relocations (l.byte)
+0007: 00      -   relocations (h.byte)
+0008: 20      -   paragraphs in header (l.byte)
+0009: 00      -   paragraphs in header (h.byte)
+000A: 00      -   minimum memory (l.byte)
+000B: 00      -   minimum memory (h.byte)
+000C: FF      -   maximum memory (l.byte)
+000D: FF      -   maximum memory (h.byte)
+000E: 00      -   SS - stack segment (l.byte)
+000F: 00      -   SS - stack segment (h.byte)
+0010: 00      -   SP - stack pointer (l.byte)
+0011: 02      -   SP - stack pointer (h.byte)
+0012: 6B      -   check sum (l.byte)
+0013: 07      -   check sum (h.byte)
+0014: 00      -   IP - instruction pointer (l.byte)
+0015: 00      -   IP - instruction pointer (h.byte)
+0016: 2F      -   CS - code segment (l.byte)
+0017: 00      -   CS - code segment (h.byte)
+0018: 1E      -   relocation table adress (l.byte)
+0019: 00      -   relocation table adress (h.byte)
+001A: 00      -   overlay number (l.byte)
+001B: 00      -   overlay number (h.byte)
+001C: 01      -   signature (l.byte)
+001D: 00      -   signature (h.byte)
+001E: 01      -   relocation table - offset inside segment (l.byte)
+001F: 00      -   relocation table - offset inside segment (h.byte)
+0020: 2F      -   relocation table - segment anchor (l.byte)
+0021: 00      -   relocation table - segment anchor (h.byte)
+0022 to 01FF  -   reserved relocation area  (00) 
+
+
+
+
+===================================================================================================

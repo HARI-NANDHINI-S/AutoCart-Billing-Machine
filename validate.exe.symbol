@@ -1,0 +1,24 @@
+< THE SYMBOL TABLE >  validate.exe  --  emu8086 assembler version: 4.08 
+===================================================================================================
+Name                     	Offset    	Size      	Type      	Segment   
+===================================================================================================
+STACK                    	00000     	-5        	SEGMENT   	(ITSELF)  
+DATA                     	00010     	-5        	SEGMENT   	(ITSELF)  
+INFILE                   	00000     	1         	VAR       	data      
+OUTFILE                  	0000A     	1         	VAR       	data      
+BUFFER                   	00015     	1         	VAR       	data      
+RES                      	00079     	1         	VAR       	data      
+HANDLE                   	0007A     	2         	VAR       	data      
+CODE                     	00018     	-5        	SEGMENT   	(ITSELF)  
+MAIN                     	00000     	-1        	NEAR      	code      
+NAME_LOOP                	0002C     	-1        	LABEL     	code      
+SKIP_LF                  	00045     	-1        	LABEL     	code      
+PHONE_START              	00048     	-1        	LABEL     	code      
+PHONE_LOOP               	0004B     	-1        	LABEL     	code      
+INVALID                  	0005D     	-1        	LABEL     	code      
+WRITE_RESULT             	00062     	-1        	LABEL     	code      
+EXIT_PROGRAM             	00087     	-1        	LABEL     	code      
+===================================================================================================
+[ 3/11/2026  --  2:17:51 PM ] 
+< END >
+ 

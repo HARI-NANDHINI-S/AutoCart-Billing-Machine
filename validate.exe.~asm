@@ -1,0 +1,124 @@
+.model small
+.stack 100h
+
+.data
+infile  db "input.txt",0
+outfile db "result.txt",0
+
+buffer  db 100 dup(0)
+res     db '0'
+
+handle  dw ?
+
+.code
+main proc
+
+mov ax,@data
+mov ds,ax
+
+; OPEN INPUT FILE
+mov ah,3Dh
+mov al,0
+lea dx,infile
+int 21h
+jc write_result
+
+mov handle,ax
+
+; READ FILE
+mov ah,3Fh
+mov bx,handle
+mov cx,100
+lea dx,buffer
+int 21h
+
+; CLOSE FILE
+mov ah,3Eh
+mov bx,handle
+int 21h
+
+lea si,buffer
+
+; NAME VALIDATION
+name_loop:
+
+lodsb
+
+cmp al,13
+je skip_lf
+
+cmp al,10
+je phone_start
+
+cmp al,' '
+je name_loop
+
+and al,0DFh
+
+cmp al,'A'
+jb invalid
+
+cmp al,'Z'
+ja invalid
+
+jmp name_loop
+
+skip_lf:
+lodsb
+jmp phone_start
+
+; PHONE VALIDATION
+phone_start:
+
+mov cx,10
+
+phone_loop:
+
+lodsb
+
+cmp al,'0'
+jb invalid
+
+cmp al,'9'
+ja invalid
+
+loop phone_loop
+
+mov res,'1'
+jmp write_result
+
+invalid:
+mov res,'0'
+
+; CREATE RESULT FILE
+write_result:
+
+mov ah,3Ch
+mov cx,0
+lea dx,outfile
+int 21h
+jc exit_program
+
+mov handle,ax
+
+mov ah,40h
+mov bx,handle
+mov cx,1
+lea dx,res
+int 21h
+
+mov ah,3Eh
+mov bx,handle
+int 21h
+
+exit_program:
+
+mov ah,4Ch
+int 21h
+
+main endp
+end main
+
+
+
+; [SOURCE]: C:\Users\ADMIN\Desktop\Module 1\validation.asm

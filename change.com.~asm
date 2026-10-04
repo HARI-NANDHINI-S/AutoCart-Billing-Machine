@@ -1,0 +1,75 @@
+ORG 100h
+
+start:
+; --- Calculation ---
+MOV  AX, [tendered]
+MOV  BX, [due]
+SUB  AX, BX                ; AX = change
+
+; --- Convert to ASCII ---
+MOV  CX, 0
+MOV  BX, 10
+
+div_loop:
+XOR  DX, DX
+DIV  BX
+PUSH DX
+INC  CX
+OR   AX, AX                ; Faster way to check if AX is 0
+JNZ  div_loop
+
+; --- Pop digits into buffer ---
+; Use LEA (Load Effective Address) to avoid "Wrong Parameter" errors
+LEA  DI, [buf]
+
+pop_loop:
+POP  AX
+ADD  AL, '0'
+MOV  [DI], AL              ; Manual store to be safe
+INC  DI
+LOOP pop_loop
+
+; --- Append CR + LF ---
+MOV  BYTE [DI], 0Dh        ; Carriage Return
+INC  DI
+MOV  BYTE [DI], 0Ah        ; Line Feed
+INC  DI
+
+; --- File Operations ---
+; Create file
+MOV  AH, 3Ch
+MOV  CX, 0
+LEA  DX, [fname]
+INT  21h
+JC   exit_prog             ; Exit if error (Carry Flag set)
+MOV  [handle], AX
+
+; Write to file
+MOV  BX, [handle]
+MOV  AH, 40h
+LEA  DX, [buf]             ; Point to start of buffer
+MOV  CX, DI
+SUB  CX, DX                ; Calculate length: Current DI - Start Address
+INT  21h
+
+; Close file
+MOV  AH, 3Eh
+MOV  BX, [handle]
+INT  21h
+
+exit_prog:
+MOV  AH, 4Ch
+XOR  AL, AL
+INT  21h
+
+; --- Data Section ---
+; Ensure all labels are followed by their type (DW/DB)
+tendered  DW 50000
+due       DW 34500
+handle    DW 0
+fname     DB 'RESULT.TXT', 0
+buf       DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 ; Defined explicitly
+
+
+
+; [SOURCE]: C:\Users\ADMIN\Desktop\Module 1\change.asm
